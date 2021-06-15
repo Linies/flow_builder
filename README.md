@@ -1,14 +1,20 @@
 # flow_builder
 
-A new Flutter package project.
+通过Stream实现异步数据流监听的组件构造器。
 
-## Getting Started
+1.实现FlowState抽象类来自定义数据流状态；
 
-This project is a starting point for a Dart
-[package](https://flutter.dev/developing-packages/),
-a library module containing code that can be shared easily across
-multiple Flutter or Dart projects.
+2.flows：返回对应State的异步任务；
 
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+3.flowWidgetBuilder构建对应state不同组件；
+
+```
+
+      FlowStateBuilder<CustomState>(
+        flows: [future1, future2, future3],
+        flowWidgetBuilder: (_, state) {
+          return Container(child: ...);
+        },
+      )
+```
+
