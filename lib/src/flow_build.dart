@@ -1,3 +1,4 @@
+import 'package:async/async.dart';
 import 'package:flutter/widgets.dart';
 import 'flow_state.dart';
 
@@ -8,7 +9,6 @@ typedef FlowWidgetBuilder<E extends FlowState> = Widget Function(
 typedef FutureFunction<E extends FlowState> = Future<E> Function();
 
 class FlowStateBuilder<E extends FlowState> extends StatelessWidget {
-
   final Stream<E> _stream;
 
   final List<FutureFunction<E>> flows;
@@ -27,13 +27,30 @@ class FlowStateBuilder<E extends FlowState> extends StatelessWidget {
     @required this.flows,
     @required this.flowWidgetBuilder,
     this.initialState,
-  }) : _stream = Stream.multi(
-          (controller) =>
-          Future.forEach(flows, (FutureFunction<E> function) async {
-            var future = function.call();
-            controller.addStream(future.asStream());
-            await future;
-          }));
+  }) : _stream = Stream.multi((controller) =>
+            Future.forEach(flows, (FutureFunction<E> function) async {
+              var future = function.call();
+              controller.addStream(future.asStream());
+              await future;
+            }));
+
+  FlowStateBuilder.lazy({
+    @required this.flows,
+    @required this.flowWidgetBuilder,
+    @required Future lazyFuture,
+    this.initialState,
+    bool isSeq = false,
+  }) : _stream = LazyStream<E>(() async {
+          if (null != lazyFuture) await lazyFuture;
+          return isSeq
+              ? Stream.multi((controller) =>
+                  Future.forEach(flows, (FutureFunction<E> function) async {
+                    var future = function.call();
+                    controller.addStream(future.asStream());
+                    await future;
+                  }))
+              : Stream.fromFutures(flows.map((function) => function.call()));
+        });
 
   @override
   Widget build(BuildContext context) {
